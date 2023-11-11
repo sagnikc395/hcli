@@ -1,4 +1,4 @@
-module hackernews-cli
+module hcli
 
 go 1.21.3
 
