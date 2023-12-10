@@ -1,48 +1,52 @@
 package main
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"net/http"
 	"os/exec"
 	"runtime"
-
-	"github.com/PuerkitoBio/goquery"
 )
 
 type Item struct {
 	Title string `xml:"title"`
-	Link  string `xml:"title"`
+	Link  string `xml:"link"`
 }
 
 type RSS struct {
 	Items []Item `xml:"channel>item"`
 }
 
-func request(url string) (*goquery.Document, error) {
+func request(url string) (*http.Response, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	//	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("HTTP request failed with status code : %d", resp.StatusCode)
 	}
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	return doc, nil
+
+	return resp, nil
 }
 
 // parse the RSS response
-func parseRSS(doc *goquery.Document) (*RSS, error) {
-	rss := &RSS{}
-	err := xml.Unmarshal([]byte(doc.Text()), rss)
+func parseRSS(resp *http.Response) (*RSS, error) {
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
+
+	rss := &RSS{}
+	decoder := xml.NewDecoder(bytes.NewReader(body))
+	decoder.Strict = false
+	if err := decoder.Decode(rss); err != nil {
+		return nil, err
+	}
+
 	return rss, nil
 }
 
@@ -94,5 +98,17 @@ func initHCLI() string {
 }
 
 func main() {
+	resp, err := request("https://news.ycombinator.com/rss")
+	if err != nil {
+		fmt.Println("An error occured: ", err)
+		return
+	}
+	rss, err := parseRSS(resp)
+	if err != nil {
+		fmt.Println("Error parsing RSS: ", err)
+		return
+	}
 
+	printPosts(rss.Items)
+	userPromptForPost(rss.Items)
 }
