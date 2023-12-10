@@ -27,7 +27,7 @@ func request(url string) (*http.Response, error) {
 	//	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP request failed with status code : %d", resp.StatusCode)
+		return nil, fmt.Errorf("HTTP request failed with status code : %d\n", resp.StatusCode)
 	}
 
 	return resp, nil
@@ -61,7 +61,7 @@ func userPromptForPost(items []Item) {
 	fmt.Printf("Type post number to open, or 0 to quit:")
 	_, err := fmt.Scanf("%d", &postnum)
 	if err != nil {
-		fmt.Printf("Invalid input")
+		fmt.Printf("Invalid input\n")
 		return
 	}
 	if postnum == 0 {
@@ -77,10 +77,10 @@ func userPromptForPost(items []Item) {
 }
 
 func openURL(url string) {
-	cmd := initHCLI() + url
+	cmd := initHCLI() + " \"" + url + "\""
 	err := exec.Command("sh", "-c", cmd).Run()
 	if err != nil {
-		fmt.Printf("Error opening URL: %s", err)
+		fmt.Printf("Error opening URL: %s\n", err)
 	}
 }
 
