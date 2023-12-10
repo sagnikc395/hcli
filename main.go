@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"net/http"
+	"os/exec"
 	"runtime"
 
 	"github.com/PuerkitoBio/goquery"
@@ -45,7 +46,39 @@ func parseRSS(doc *goquery.Document) (*RSS, error) {
 	return rss, nil
 }
 
+func printPosts(items []Item) {
+	for i, item := range items {
+		fmt.Printf("%d. %s\n", i+1, item.Title)
+	}
+}
 
+func userPromptForPost(items []Item) {
+	var postnum int
+	fmt.Printf("Type post number to open, or 0 to quit:")
+	_, err := fmt.Scanf("%d", &postnum)
+	if err != nil {
+		fmt.Printf("Invalid input")
+		return
+	}
+	if postnum == 0 {
+		return
+	}
+
+	if postnum < 1 || postnum > len(items) {
+		fmt.Printf("Invalid post number")
+		return
+	}
+	openURL(items[postnum-1].Link)
+	userPromptForPost(items)
+}
+
+func openURL(url string) {
+	cmd := initHCLI() + url
+	err := exec.Command("sh", "-c", cmd).Run()
+	if err != nil {
+		fmt.Printf("Error opening URL: %s", err)
+	}
+}
 
 func initHCLI() string {
 	switch runtime.GOOS {
